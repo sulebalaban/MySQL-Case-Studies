@@ -1,0 +1,22 @@
+WITH RECURSIVE seq AS (
+    SELECT 1 AS value
+    UNION ALL
+    SELECT value + 1
+    FROM seq
+    WHERE value < 53
+),
+missing_weeks AS (
+    SELECT value
+    FROM seq
+    WHERE value NOT IN (SELECT DISTINCT week_number FROM clean_weekly_sales)
+),
+grouped_missing AS (
+    SELECT value, 
+           value - ROW_NUMBER() OVER (ORDER BY value) AS group_id
+    FROM missing_weeks
+)
+SELECT CONCAT(MIN(value), '-', MAX(value)) AS missing_range
+FROM grouped_missing
+GROUP BY group_id
+ORDER BY MIN(value);
+
